@@ -8,9 +8,6 @@ SendPulse.Net is a .NET SDK that simplifies integration with the SendPulse API, 
 - Authenticate and interact with the SendPulse API
 - Manage email campaigns, mailing lists, and templates
 - Send transactional emails and SMS
-- Work with push notifications
-- Automate chatbot interactions
-- Retrieve analytics and reports
 
 ## Installation
 
@@ -30,39 +27,43 @@ dotnet add package SendPulse.Net
 To use SendPulse.Net, you need your SendPulse API credentials.
 Obtain them from [SendPulse API settings](https://login.sendpulse.com/settings/#api).
 
-### 2. Initialize the Client
+### 2. Configure Service
 ```csharp
-using SendPulse.Net;
+using SendPulseNetSDK.src.SendPulse;
+using SendPulseNetSDK.src.SendPulse.Models;
 
-var sendPulseClient = new SendPulseClient(
-    "your-client-id",
-    "your-client-secret"
-);
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSendPulseNet(config =>
+{
+    config.BaseUrl = "https://api.sendpulse.com";
+    config.ClientId = "991e5dcb9163ca4d5d**********";
+    config.ClientSecret = "client_secret_here";
+});
 ```
 
 ### 3. Example: Send an Email
 ```csharp
-var email = new EmailMessage
-{
-    From = new EmailAddress("your-email@example.com", "Your Name"),
-    To = new List<EmailAddress>
-    {
-        new EmailAddress("recipient@example.com", "Recipient Name")
-    },
-    Subject = "Hello from SendPulse.Net",
-    HtmlContent = "<h1>Welcome!</h1><p>This is a test email.</p>"
-};
+//Inject Interface
+// ISendPulseClient sendPulseClient;
 
-var response = await sendPulseClient.Email.SendAsync(email);
-Console.WriteLine(response.IsSuccess ? "Email sent!" : "Failed to send email.");
+var fromEmail = new EmailAddress() { Email = "me@email.com", Name = "My Email Name" };
+
+    var toEmail = new List<EmailAddress>()
+    {
+        new EmailAddress()
+        {
+            Email = "me@gmail.com",
+            Name ="John Doe"
+        }
+    };
+ var response = await sendPulseClient.SendApiEmailAsync(fromEmail, toEmail, "Test Email", "<p>Testing Sendpulse Nuget package</p>");
+
+Console.WriteLine(response.Result ? "Email sent!" : "Failed to send email.");
 ```
 
-## Available APIs
-- **Email API** - Manage campaigns, templates, and transactional emails.
-- **SMS API** - Send and track SMS messages.
-- **Push API** - Manage and send push notifications.
-- **Chatbot API** - Automate chatbot workflows.
-- **Contacts API** - Manage mailing lists and subscribers.
+## Available APIs in this version
+- **Email API** - Send transactional emails.
 
 ## Documentation
 Detailed documentation can be found [here](https://sendpulse.com/integrations/api).
