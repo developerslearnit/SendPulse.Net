@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>sendpulse-net</PackageId>
+    <Title>SendPulse.Net</Title>
+    <Authors>Adesina Mark Omoniyi</Authors>
+    <Company>DevelopersLearnIT</Company>
+    <Description>SendPulse.Net is a .NET and .NET Core SDK that simplifies integration with the SendPulse API, allowing developers to send emails through SendPulse API and SMTP,SMS services, and more in their .NET and .NET Core applications. It the go-to library for .NET developers leveraging SendPulse services.</Description>
+    <PackageProjectUrl>https://github.com/developerslearnit/SendPulse.Net</PackageProjectUrl>
+    <PackageIcon>Logo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/developerslearnit/SendPulse.Net</RepositoryUrl>
+    <PackageTags>sendpulse,sendpulse-email,sendpulse-sms</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\Logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
