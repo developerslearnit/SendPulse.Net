@@ -5,7 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-		<PackageId>sendpulse-net</PackageId>
+		<PackageId>SendPulse.Net</PackageId>
 		<Title>SendPulse.Net</Title>
 		<Authors>Adesina Mark Omoniyi</Authors>
 		<Company>DevelopersLearnIT</Company>
@@ -15,7 +15,7 @@
 		<RepositoryUrl>https://github.com/developerslearnit/SendPulse.Net</RepositoryUrl>
 		<PackageTags>sendpulse,sendpulse-email,sendpulse-sms</PackageTags>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
