@@ -1,7 +1,6 @@
-﻿using System.Net.Mail;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace SendPulseNetSDK.src.SendPulse.Models;
+namespace SendPulseNetSDK.SendPulse.Models;
 
 public class SendPulseEmail
 {

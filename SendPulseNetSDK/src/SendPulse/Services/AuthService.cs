@@ -1,30 +1,37 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using System.Security.Authentication;
 using System.Text;
 using System.Text.Json;
-using SendPulseNetSDK.src.SendPulse.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using SendPulseNetSDK.SendPulse.Models;
 
-namespace SendPulseNetSDK.src.SendPulse.Services;
+namespace SendPulseNetSDK.SendPulse.Services;
 
-public class AuthService
+public class AuthService(HttpClient httpClient, IOptions<SendPulseOptions> options, IMemoryCache cache)
 {
-
-    private readonly HttpClient _httpClient;
-    private readonly SendPulseOptions _options;
-    private readonly IMemoryCache _cache;
+    private readonly SendPulseOptions _options = options.Value;
     private const string CacheKey = "SendPulseNet_AccessToken";
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public AuthService(HttpClient httpClient,IOptions<SendPulseOptions> options, IMemoryCache cache)
-    {
-        _httpClient = httpClient;
-        _options = options.Value;
-        _cache = cache;
-    }
-
+    /// <summary>
+    /// Retrieves an access token asynchronously.
+    /// </summary>
+    /// <returns>
+    /// A task representing the asynchronous operation, returning the access token as a string, 
+    /// or <c>null</c> if the retrieval fails.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when authentication fails.
+    /// </exception>
+    /// <exception cref="Exception">
+    /// Thrown when there is an error in the API request.
+    /// </exception>
+    /// <exception cref="AuthenticationException">
+    /// Thrown when an unexpected error occurs.
+    /// </exception>
     public async Task<string?> GetAccessTokenAsync()
     {
-        if (_cache.TryGetValue(CacheKey, out string? cachedToken))
+        if (cache.TryGetValue(CacheKey, out string? cachedToken))
         {
             return cachedToken;
         }
@@ -37,7 +44,7 @@ public class AuthService
         };
 
         var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync($"{_options.BaseUrl}/oauth/access_token", content);
+        var response = await httpClient.PostAsync($"{_options.BaseUrl}/oauth/access_token", content);
 
         if (!response.IsSuccessStatusCode)
             return null;
@@ -51,7 +58,7 @@ public class AuthService
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(authResponse.ExpiresIn - 60)
         };
-        _cache.Set(CacheKey, authResponse.AccessToken, cacheOptions);
+        cache.Set(CacheKey, authResponse.AccessToken, cacheOptions);
 
         return authResponse.AccessToken;
 

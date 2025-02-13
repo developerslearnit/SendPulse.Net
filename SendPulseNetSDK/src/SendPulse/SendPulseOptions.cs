@@ -1,4 +1,4 @@
-﻿namespace SendPulseNetSDK.src.SendPulse;
+﻿namespace SendPulseNetSDK.SendPulse;
 
 public class SendPulseOptions
 {

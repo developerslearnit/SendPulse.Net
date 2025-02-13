@@ -1,4 +1,4 @@
-﻿namespace SendPulseNetSDK.src.SendPulse.Helpers;
+﻿namespace SendPulseNetSDK.SendPulse.Helpers;
 
 public class StaticHelpers
 {

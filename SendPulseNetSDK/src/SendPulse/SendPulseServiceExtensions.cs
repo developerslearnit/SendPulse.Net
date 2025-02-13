@@ -1,8 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using SendPulseNetSDK.src.SendPulse.Services;
+﻿using Microsoft.Extensions.DependencyInjection;
+using SendPulseNetSDK.SendPulse.Services;
 
-namespace SendPulseNetSDK.src.SendPulse;
+namespace SendPulseNetSDK.SendPulse;
 
 public static class SendPulseServiceExtensions
 {

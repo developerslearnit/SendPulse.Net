@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace SendPulseNetSDK.src.SendPulse.Models;
+namespace SendPulseNetSDK.SendPulse.Models;
 
 public class EmailAddress
 {

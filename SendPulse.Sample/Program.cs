@@ -1,5 +1,5 @@
-using SendPulseNetSDK.src.SendPulse;
-using SendPulseNetSDK.src.SendPulse.Models;
+using SendPulseNetSDK.SendPulse;
+using SendPulseNetSDK.SendPulse.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +25,7 @@ app.MapGet("/",async (ISendPulseClient sendpulse) =>
             Name ="Adesina Mark"
         }
     };
-    await sendpulse.SendApiEmailAsync(fromEmail, toEmail, "Test Email", "<p>Testing Sendpulse Nuget package</p>");
+    await sendpulse.SendApiEmailAsync(fromEmail, toEmail, "Test Email", "<p>Testing SendPulse Nuget package</p>");
 });
 
 app.Run();
