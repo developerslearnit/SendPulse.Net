@@ -7,11 +7,22 @@ using SendPulseNetSDK.SendPulse.Models;
 
 namespace SendPulseNetSDK.SendPulse.Services;
 
-public class AuthService(HttpClient httpClient, IOptions<SendPulseOptions> options, IMemoryCache cache)
+public class AuthService
 {
-    private readonly SendPulseOptions _options = options.Value;
+    private readonly HttpClient _httpClient;
+    private readonly IMemoryCache _cache;
+    private readonly SendPulseOptions _options;
+
+    public AuthService(IOptions<SendPulseOptions> options, IMemoryCache cache, HttpClient httpClient)
+    {
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient)); 
+    }
+
     private const string CacheKey = "SendPulseNet_AccessToken";
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
 
     /// <summary>
     /// Retrieves an access token asynchronously.
@@ -31,9 +42,10 @@ public class AuthService(HttpClient httpClient, IOptions<SendPulseOptions> optio
     /// </exception>
     public async Task<string?> GetAccessTokenAsync()
     {
-        if (cache.TryGetValue(CacheKey, out string? cachedToken))
+
+        if (_cache.TryGetValue(CacheKey, out string? cachedToken))
         {
-            return cachedToken;
+            return cachedToken!;
         }
 
         var requestBody = new
@@ -44,23 +56,42 @@ public class AuthService(HttpClient httpClient, IOptions<SendPulseOptions> optio
         };
 
         var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-        var response = await httpClient.PostAsync($"{_options.BaseUrl}/oauth/access_token", content);
 
-        if (!response.IsSuccessStatusCode)
-            return null;
-
-        var responseBody = await response.Content.ReadAsStringAsync();
-        var authResponse = JsonSerializer.Deserialize<ApiAuthResponse>(responseBody, JsonOptions);
-
-        if (authResponse?.AccessToken is null) return null;
-
-        var cacheOptions = new MemoryCacheEntryOptions
+        try
         {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(authResponse.ExpiresIn - 60)
-        };
-        cache.Set(CacheKey, authResponse.AccessToken, cacheOptions);
+            var response = await _httpClient.PostAsync($"{_options.BaseUrl}/oauth/access_token", content);
 
-        return authResponse.AccessToken;
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Authentication failed. Status code: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var authResponse = JsonSerializer.Deserialize<ApiAuthResponse>(responseBody, JsonOptions);
+
+            if (authResponse?.AccessToken is null)
+            {
+                throw new AuthenticationException("Authentication response does not contain an access token.");
+            }
+
+            var expirationSeconds = Math.Max(authResponse.ExpiresIn - 60, 30);
+
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(expirationSeconds)
+            };
+            _cache.Set(CacheKey, authResponse.AccessToken, cacheOptions);
+
+            return authResponse.AccessToken;
+        }
+        catch (HttpRequestException e)
+        {
+            throw new AuthenticationException("Failed to retrieve access token due to an HTTP error.", e);
+        }
+        catch (Exception e)
+        {
+            throw new AuthenticationException("An unexpected error occurred while retrieving access token.", e);
+        }
 
     }
 }

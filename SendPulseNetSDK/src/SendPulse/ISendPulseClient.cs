@@ -89,4 +89,24 @@ public interface ISendPulseClient
     /// </example>
     Task<EmailResponse?> SendApiEmailAsync(EmailAddress fromEmail, List<EmailAddress> toEmails, string subject, string htmlBody,
         List<EmailAddress>? ccEmails = null, List<EmailAddress>? bccEmails = null, Dictionary<string, byte[]>? attachments = null);
+
+
+    /// <summary>
+    /// This method fetches all sent emails
+    /// </summary>
+    /// <returns>
+    ///  A task that represents the List of all sent emails, returning an <see cref="EmailListModel"/> 
+    /// </returns>
+    Task<List<EmailListModel>> GetEmailListAsync();
+
+    /// <summary>
+    /// This method returns a single email by taking the id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    Task<EmailDetails> GetEmailDetailsAsync(string id);
 }
+
+
+
+

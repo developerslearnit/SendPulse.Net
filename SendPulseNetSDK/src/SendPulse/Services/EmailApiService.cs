@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SendPulseNetSDK.SendPulse.Exceptions;
 using SendPulseNetSDK.SendPulse.Helpers;
@@ -7,11 +8,21 @@ using SendPulseNetSDK.SendPulse.Models;
 
 namespace SendPulseNetSDK.SendPulse.Services;
 
-public class EmailApiService(HttpClient httpClient, AuthService authService, IOptions<SendPulseOptions> options)
+public class EmailApiService
 {
-    private readonly SendPulseOptions _options = options.Value;
+
+    private readonly HttpClient _httpClient;
+    private readonly SendPulseOptions _options;
+    private readonly AuthService _authService;
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
+    public EmailApiService(HttpClient httpClient, IOptions<SendPulseOptions> options, AuthService authService)
+    {
+        _httpClient = httpClient;
+        _options = options.Value;
+        _authService = authService;
+    }
 
     /// <summary>
     /// Sends an email using the SendPulse SMTP Service API.
@@ -75,10 +86,19 @@ public class EmailApiService(HttpClient httpClient, AuthService authService, IOp
         List<EmailAddress>? ccEmails = null, List<EmailAddress>? bccEmails = null,
         Dictionary<string, byte[]>? attachments = null)
     {
-        string? token = await authService.GetAccessTokenAsync();
+        string? token = await _authService.GetAccessTokenAsync();
 
         if (string.IsNullOrWhiteSpace(token))
-            return new EmailResponse(){Id = "",Result = false};
+            throw new Exception("Authentication token is missing");
+
+        if (!toEmails.Any())
+            throw new ArgumentNullException(nameof(toEmails));
+
+        if (string.IsNullOrWhiteSpace(subject))
+            throw new ArgumentNullException(nameof(subject));
+
+        if (string.IsNullOrWhiteSpace(htmlBody))
+            throw new ArgumentNullException(nameof(htmlBody));
 
         var emailMessage = new SendPulseEmail
         {
@@ -110,15 +130,82 @@ public class EmailApiService(HttpClient httpClient, AuthService authService, IOp
         };
         requestMessage.Headers.TryAddWithoutValidation("Authorization", $"Bearer {token}");
 
-        var response = await httpClient.SendAsync(requestMessage);
+        var response = await _httpClient.SendAsync(requestMessage);
         if (!response.IsSuccessStatusCode)
-            return new EmailResponse() { Id = "", Result = false };
+        {
+            var errorResponse = await response.Content.ReadAsStringAsync();
+            throw new SendPulseEmailException($"SendPulse API Error: {response.StatusCode} - {errorResponse}");
+        }
 
         var responseBody = await response.Content.ReadAsStringAsync();
         var emailResponse = JsonSerializer.Deserialize<EmailResponse>(responseBody, JsonOptions);
 
         return emailResponse;
     }
+
+    /// <summary>
+    /// This method fetches all sent emails
+    /// </summary>
+    /// <returns>
+    ///  A task that represents the List of all sent emails, returning an <see cref="EmailListModel"/> 
+    /// </returns>
+
+    public async Task<List<EmailListModel>> GetEmailListAsync()
+    {
+        string? token = await _authService.GetAccessTokenAsync();
+
+        if (string.IsNullOrWhiteSpace(token))
+            throw new Exception("Authentication token is missing");
+
+        _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
+
+        var response = await _httpClient.GetAsync($"{_options.BaseUrl}/smtp/emails");
+
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorResponse = await response.Content.ReadAsStringAsync();
+            throw new SendPulseEmailException($"SendPulse API Error: {response.StatusCode} - {errorResponse}");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(new CustomDateTimeConverter());
+
+        var emailResponse = JsonSerializer.Deserialize<List<EmailListModel>>(responseBody, options);
+
+        return emailResponse;
+
+    }
+
+    public async Task<EmailDetails> GetEmailDetailsAsync(string id)
+    {
+        string? token = await _authService.GetAccessTokenAsync();
+
+        if (string.IsNullOrWhiteSpace(token))
+            throw new Exception("Authentication token is missing");
+
+        _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {token}");
+
+        var response = await _httpClient.GetAsync($"{_options.BaseUrl}/smtp/emails/{id}");
+
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorResponse = await response.Content.ReadAsStringAsync();
+            throw new SendPulseEmailException($"SendPulse API Error: {response.StatusCode} - {errorResponse}");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(new CustomDateTimeConverter());
+
+        var emailResponse = JsonSerializer.Deserialize<EmailDetails>(responseBody, options);
+
+        return emailResponse;
+    }
+
 }
 
-//mark2k@outlook.com

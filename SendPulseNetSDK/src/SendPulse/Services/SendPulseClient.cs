@@ -4,8 +4,18 @@ using SendPulseNetSDK.SendPulse.Models;
 
 namespace SendPulseNetSDK.SendPulse.Services;
 
-public class SendPulseClient(AuthService authService, EmailApiService emailApiService) : ISendPulseClient
+public class SendPulseClient : ISendPulseClient
 {
+
+    private readonly AuthService _authService;
+    private readonly EmailApiService _emailApiService;
+
+    public SendPulseClient(AuthService authService, EmailApiService emailApiService)
+    {
+        _authService = authService;
+        _emailApiService = emailApiService;
+    }
+
     /// <summary>
     /// Retrieves an access token asynchronously.
     /// </summary>
@@ -24,7 +34,7 @@ public class SendPulseClient(AuthService authService, EmailApiService emailApiSe
     /// </exception>
     public async Task<string?> GetAccessTokenAsync()
     {
-        return await authService.GetAccessTokenAsync();
+        return await _authService.GetAccessTokenAsync();
     }
 
     /// <summary>
@@ -87,7 +97,24 @@ public class SendPulseClient(AuthService authService, EmailApiService emailApiSe
     public async Task<EmailResponse?> SendApiEmailAsync(EmailAddress fromEmail, List<EmailAddress> toEmails, string subject, string htmlBody, List<EmailAddress>? ccEmails = null,
         List<EmailAddress>? bccEmails = null, Dictionary<string, byte[]>? attachments = null)
     {
-        return await emailApiService.SendApiEmailAsync(fromEmail, toEmails, subject, htmlBody, ccEmails, bccEmails,
+        return await _emailApiService.SendApiEmailAsync(fromEmail, toEmails, subject, htmlBody, ccEmails, bccEmails,
             attachments);
+    }
+
+
+    /// <summary>
+    /// This method fetches all sent emails
+    /// </summary>
+    /// <returns>
+    ///  A task that represents the List of all sent emails, returning an <see cref="EmailListModel"/> 
+    /// </returns>
+    public async Task<List<EmailListModel>> GetEmailListAsync()
+    {
+        return await _emailApiService.GetEmailListAsync();
+    }
+
+    public async Task<EmailDetails> GetEmailDetailsAsync(string id)
+    {
+        return await _emailApiService.GetEmailDetailsAsync(id);
     }
 }
